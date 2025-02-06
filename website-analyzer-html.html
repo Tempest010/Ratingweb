@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Website Analyzer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #0066cc;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #0052a3;
+        }
+
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .error {
+            color: #dc3545;
+            padding: 10px;
+            background-color: #f8d7da;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .results {
+            display: none;
+        }
+
+        .section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .review {
+            background-color: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .stars {
+            color: #ffc107;
+            margin-bottom: 5px;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .product-item {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #0066cc;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Website Information Analyzer</h1>
+        </div>
+
+        <div class="input-group">
+            <input type="url" id="urlInput" placeholder="Enter website URL (e.g., https://example.com)" />
+            <button id="analyzeBtn">Analyze Website</button>
+        </div>
+
+        <div id="error" class="error"></div>
+
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Analyzing website...</p>
+        </div>
+
+        <div id="results" class="results">
+            <div class="section">
+                <div class="section-title">Business Information</div>
+                <div id="businessInfo"></div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Website Purpose</div>
+                <div id="websitePurpose"></div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Customer Reviews</div>
+                <div id="reviews"></div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Products/Services</div>
+                <div id="products" class="product-grid"></div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Website Metadata</div>
+                <div id="metadata"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const urlInput = document.getElementById('urlInput');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const error = document.getElementById('error');
+        const loading = document.getElementById('loading');
+        const results = document.getElementById('results');
+
+        // Mock data (same as before)
+        const mockData = {
+            businessInfo: {
+                name: "TechGear Pro",
+                logo: "Found in header",
+                contactInfo: {
+                    email: "support@techgearpro.com",
+                    phone: "(555) 123-4567",
+                    address: "123 Tech Street, Silicon Valley, CA"
+                }
+            },
+            websitePurpose: {
+                mainCategory: "E-commerce",
+                subCategory: "Electronics and Tech Accessories",
+                description: "Online retailer specializing in high-quality tech accessories and gadgets",
+                targetAudience: "Tech enthusiasts and professionals"
+            },
+            reviews: [
+                {
+                    author: "John D.",
+                    rating: 5,
+                    date: "2024-01-15",
+                    text: "Excellent selection of products and fast shipping!"
+                },
+                {
+                    author: "Sarah M.",
+                    rating: 4,
+                    date: "2024-01-10",
+                    text: "Good quality items but shipping could be faster"
+                },
+                {
+                    author: "Mike R.",
+                    rating: 5,
+                    date: "2024-01-05",
+                    text: "Best tech accessories I've found online"
+                }
+            ],
+            products: [
+                "Phone Cases",
+                "Laptop Accessories",
+                "Charging Solutions",
+                "Smart Home Devices"
+            ],
+            metadata: {
+                description: "Premium tech accessories and gadgets for the modern professional",
+                keywords: ["tech accessories", "gadgets", "phone cases", "laptop accessories"],
+                lastUpdated: "2024-02-01"
+            }
+        };
+
+        function getStarRating(rating) {
+            return '★'.repeat(rating) + '☆'.repeat(5 - rating);
+        }
+
+        function displayResults(data) {
+            // Business Info
+            document.getElementById('businessInfo').innerHTML = `
+                <p><strong>${data.businessInfo.name}</strong></p>
+                <p>${data.businessInfo.contactInfo.email}</p>
+                <p>${data.businessInfo.contactInfo.phone}</p>
+                <p>${data.businessInfo.contactInfo.address}</p>
+            `;
+
+            // Website Purpose
+            document.getElementById('websitePurpose').innerHTML = `
+                <p>${data.websitePurpose.description}</p>
+                <p><strong>Category:</strong> ${data.websitePurpose.mainCategory} - ${data.websitePurpose.subCategory}</p>
+                <p><strong>Target Audience:</strong> ${data.websitePurpose.targetAudience}</p>
+            `;
+
+            // Reviews
+            const reviewsHtml = data.reviews.map(review => `
+                <div class="review">
+                    <div class="review-header">
+                        <strong>${review.author}</strong>
+                        <span>${review.date}</span>
+                    </div>
+                    <div class="stars">${getStarRating(review.rating)}</div>
+                    <p>${review.text}</p>
+                </div>
+            `).join('');
+            document.getElementById('reviews').innerHTML = reviewsHtml;
+
+            // Products
+            const productsHtml = data.products.map(product => `
+                <div class="product-item">${product}</div>
+            `).join('');
+            document.getElementById('products').innerHTML = productsHtml;
+
+            // Metadata
+            document.getElementById('metadata').innerHTML = `
+                <p><strong>Description:</strong> ${data.metadata.description}</p>
+                <p><strong>Keywords:</strong> ${data.metadata.keywords.join(", ")}</p>
+                <p><strong>Last Updated:</strong> ${data.metadata.lastUpdated}</p>
+            `;
+        }
+
+        analyzeBtn.addEventListener('click', () => {
+            const url = urlInput.value.trim();
+            
+            if (!url.startsWith('http')) {
+                error.textContent = 'Please enter a valid URL starting with http:// or https://';
+                error.style.display = 'block';
+                return;
+            }
+
+            error.style.display = 'none';
+            loading.style.display = 'block';
+            results.style.display = 'none';
+            analyzeBtn.disabled = true;
+
+            // Simulate API call
+            setTimeout(() => {
+                loading.style.display = 'none';
+                results.style.display = 'block';
+                analyzeBtn.disabled = false;
+                displayResults(mockData);
+            }, 2000);
+        });
+    </script>
+</body>
+</html>
